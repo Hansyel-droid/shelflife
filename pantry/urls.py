@@ -8,4 +8,6 @@ router.register(r'shopping', views.ShoppingListViewSet, basename='shopping')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('expiring-soon/',   views.expiring_soon,    name='expiring-soon'),
+    path('suggest-recipes/', views.suggest_recipes,  name='suggest-recipes'),
 ]
