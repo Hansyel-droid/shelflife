@@ -1,12 +1,8 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# If you have a .env file, load it (optional for now)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -89,11 +85,14 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 SITE_ID = 1
+# ── allauth settings ──────────────────────────────────────────
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}   # allows BOTH username and email
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGOUT_ON_GET = True
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -105,7 +104,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # ── External APIs ─────────────────────────────────────────────────────────────
-SPOONACULAR_API_KEY = os.environ.get('SPOONACULAR_API_KEY', '')
+SPOONACULAR_API_KEY = '4c97338e133042369cf0cb9d565d2ee6'
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [

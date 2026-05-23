@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth.models import User
 
 class Category(models.TextChoices):
     DAIRY = 'dairy', 'Dairy'
@@ -15,6 +16,7 @@ class Category(models.TextChoices):
     OTHER = 'other', 'Other'
 
 class PantryItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=200)
     category = models.CharField(max_length=50, choices=Category.choices, default=Category.OTHER)
     expiry_date = models.DateField()
@@ -43,6 +45,7 @@ class PantryItem(models.Model):
         return (self.expiry_date - timezone.now().date()).days
 
 class ShoppingList(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=200)
     category = models.CharField(max_length=50, choices=Category.choices, default=Category.OTHER)
     unit = models.CharField(max_length=50, default='pcs')
@@ -59,3 +62,4 @@ class ShoppingList(models.Model):
 
     def __str__(self):
         return f'[Shopping] {self.name}'
+    

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShelfLife — Smart Pantry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFAF4;
+    --sage: #7A9E7E;
+    --sage-dark: #4A7A50;
+    --rust: #C4622D;
+    --rust-light: #E8876A;
+    --charcoal: #2C2C2C;
+    --mid-gray: #888;
+    --border: #DDD5C5;
+    --danger: #D4473A;
+    --warning: #E0973A;
+    --good: #5A9A5F;
+    --card-bg: #FFFFFF;
+    --shadow: 0 2px 16px rgba(44,44,44,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--cream);
+    font-family: 'Instrument Sans', sans-serif;
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--charcoal);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    color: var(--cream);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--rust-light); font-style: italic; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-pills { display: flex; gap: 0.5rem; }
+  .pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .pill.active, .pill:hover { background: var(--rust); border-color: var(--rust); color: white; }
+  .pill-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--rust); color: white;
+    width: 18px; height: 18px; border-radius: 50%;
+    font-size: 0.65rem; margin-left: 4px;
+  }
+  .logout-btn {
+    font-size: 0.78rem; color: rgba(255,255,255,0.6);
+    text-decoration: none; padding: 0.3rem 0.75rem;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 99px;
+    transition: all 0.2s;
+  }
+  .logout-btn:hover { color: white; border-color: white; }
+  .main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--card-bg); border-radius: 12px; padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 0.25rem;
+  }
+  .stat-label { font-size: 0.72rem; color: var(--mid-gray); text-transform: uppercase; letter-spacing: 0.08em; }
+  .stat-value { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 600; }
+  .stat-value.danger { color: var(--danger); }
+  .stat-value.warning { color: var(--warning); }
+  .stat-value.good { color: var(--good); }
+  .tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+  .tab {
+    padding: 0.75rem 1.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+    color: var(--mid-gray); border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--charcoal); border-bottom-color: var(--rust); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+  .panel-title { font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 300; }
+  .btn {
+    font-family: 'Instrument Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
+    padding: 0.6rem 1.25rem; border-radius: 8px; border: none; cursor: pointer;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+  .btn-primary { background: var(--rust); color: white; }
+  .btn-primary:hover { background: var(--rust-light); }
+  .btn-sage { background: var(--sage); color: white; }
+  .btn-sage:hover { background: var(--sage-dark); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--charcoal); }
+  .btn-ghost:hover { background: var(--cream); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.78rem; }
+  .filters { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .filter-input {
+    padding: 0.5rem 0.85rem; border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Instrument Sans', sans-serif; font-size: 0.85rem; background: var(--card-bg);
+    outline: none; transition: border 0.2s;
+  }
+  .filter-input:focus { border-color: var(--sage); }
+  .table-wrap { background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: #F8F5EF; }
+  th {
+    padding: 0.85rem 1rem; text-align: left; font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--mid-gray);
+    font-family: 'DM Mono', monospace;
+  }
+  td { padding: 0.9rem 1rem; font-size: 0.88rem; border-top: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: #FDFAF4; }
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge-expired { background: #FDECEA; color: var(--danger); }
+  .badge-soon { background: #FEF3E2; color: var(--warning); }
+  .badge-good { background: #EAF4EB; color: var(--good); }
+  .td-actions { display: flex; gap: 0.4rem; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(44,44,44,0.5);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card-bg); border-radius: 16px; padding: 2rem;
+    width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  .modal-title { font-family: 'Fraunces', serif; font-size: 1.4rem; margin-bottom: 1.5rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+  .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--mid-gray); text-transform: uppercase; letter-spacing: 0.06em; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 0.6rem 0.85rem; border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Instrument Sans', sans-serif; font-size: 0.88rem;
+    outline: none; transition: border 0.2s; background: var(--warm-white);
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--sage); }
+  .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+  .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+  .recipe-card {
+    background: var(--card-bg); border-radius: 12px; overflow: hidden;
+    box-shadow: var(--shadow); border: 1px solid var(--border); transition: transform 0.2s;
+  }
+  .recipe-card:hover { transform: translateY(-2px); }
+  .recipe-img { width: 100%; height: 160px; object-fit: cover; }
+  .recipe-body { padding: 1rem; }
+  .recipe-title { font-family: 'Fraunces', serif; font-size: 1.05rem; margin-bottom: 0.5rem; }
+  .recipe-meta { font-size: 0.78rem; color: var(--mid-gray); display: flex; gap: 1rem; }
+  .used { color: var(--good); font-weight: 500; }
+  .missed { color: var(--warning); font-weight: 500; }
+  .expiring-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .expiring-item {
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem;
+    box-shadow: var(--shadow);
+  }
+  .expiring-item.expired { border-left: 4px solid var(--danger); }
+  .expiring-item.warning { border-left: 4px solid var(--warning); }
+  .expiring-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .expiring-info { flex: 1; }
+  .expiring-name { font-weight: 500; }
+  .expiring-sub { font-size: 0.78rem; color: var(--mid-gray); margin-top: 0.1rem; }
+  .expiring-days { font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 500; }
+  .shopping-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.85rem 1rem; background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 0.6rem;
+  }
+  .shopping-item.purchased { opacity: 0.5; }
+  .shopping-item .item-name { flex: 1; }
+  .shopping-item input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--sage); }
+  .empty { text-align: center; padding: 3rem; color: var(--mid-gray); }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .empty h3 { font-family: 'Fraunces', serif; font-size: 1.2rem; color: var(--charcoal); margin-bottom: 0.5rem; }
+  .toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 300; display: flex; flex-direction: column; gap: 0.5rem; }
+  .toast {
+    padding: 0.85rem 1.25rem; border-radius: 10px; font-size: 0.85rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: toastIn 0.3s ease; max-width: 320px;
+  }
+  .toast.success { background: var(--good); color: white; }
+  .toast.error { background: var(--danger); color: white; }
+  .toast.info { background: var(--charcoal); color: white; }
+  @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .user-greeting { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Shelf<span>Life</span></div>
+  <div class="header-right">
+    <div class="header-pills">
+      <button class="pill active" onclick="switchTab('pantry')">📦 Pantry</button>
+      <button class="pill" onclick="switchTab('expiring')">⏰ Expiring <span class="pill-count" id="expiringCount">0</span></button>
+      <button class="pill" onclick="switchTab('recipes')">🍳 Recipes</button>
+      <button class="pill" onclick="switchTab('shopping')">🛒 Shopping <span class="pill-count" id="shoppingCount">0</span></button>
+    </div>
+    {% if user.is_authenticated %}
+        {% load socialaccount %}
+        {% get_social_accounts user as accounts %}
+        <div style="display:flex;align-items:center;gap:0.6rem">
+        {% if accounts.google %}
+            {% with accounts.google.0 as google_account %}
+            <img
+                src="{{ google_account.get_avatar_url }}"
+                alt="{{ user.first_name }}"
+                style="width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);object-fit:cover;"
+                onerror="this.style.display='none'"
+            >
+            <span style="font-size:0.8rem;color:rgba(255,255,255,0.7)">{{ user.first_name|default:user.email }}</span>
+            {% endwith %}
+        {% else %}
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--rust);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:600;color:white;">
+            {{ user.username|first|upper }}
+            </div>
+            <span style="font-size:0.8rem;color:rgba(255,255,255,0.7)">{{ user.username }}</span>
+        {% endif %}
+        <a class="logout-btn" href="{% url 'account_logout' %}">Logout</a>
+        </div>
+        {% endif %}
+  </div>
+</header>
+
+<main class="main">
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Total Items</div>
+      <div class="stat-value good" id="statTotal">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Expiring Soon</div>
+      <div class="stat-value warning" id="statExpiring">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Expired</div>
+      <div class="stat-value danger" id="statExpired">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Shopping List</div>
+      <div class="stat-value" id="statShopping">—</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-pantry" onclick="switchTab('pantry')">📦 Pantry</div>
+    <div class="tab" id="tab-expiring" onclick="switchTab('expiring')">⏰ Expiring Soon</div>
+    <div class="tab" id="tab-recipes" onclick="switchTab('recipes')">🍳 Recipe Suggestions</div>
+    <div class="tab" id="tab-shopping" onclick="switchTab('shopping')">🛒 Shopping List</div>
+  </div>
+
+  <!-- Pantry Tab -->
+  <div class="tab-panel active" id="panel-pantry">
+    <div class="panel-header">
+      <div class="panel-title">My Pantry</div>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Item</button>
+    </div>
+    <div class="filters">
+      <input class="filter-input" type="text" id="searchInput" placeholder="🔍 Search items…" oninput="filterItems()">
+      <select class="filter-input" id="categoryFilter" onchange="filterItems()">
+        <option value="">All Categories</option>
+        <option value="dairy">Dairy</option>
+        <option value="meat">Meat & Seafood</option>
+        <option value="produce">Produce</option>
+        <option value="grains">Grains & Bread</option>
+        <option value="frozen">Frozen</option>
+        <option value="canned">Canned & Jarred</option>
+        <option value="condiments">Condiments & Sauces</option>
+        <option value="beverages">Beverages</option>
+        <option value="snacks">Snacks</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th><th>Category</th><th>Qty</th><th>Expires</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="pantryTable">
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--mid-gray)">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Expiring Tab -->
+  <div class="tab-panel" id="panel-expiring">
+    <div class="panel-header">
+      <div class="panel-title">Expiring in 48 Hours</div>
+      <button class="btn btn-ghost" onclick="loadExpiring()">↻ Refresh</button>
+    </div>
+    <div id="expiringList"><div class="empty"><div class="empty-icon">⏰</div><p>Loading…</p></div></div>
+  </div>
+
+  <!-- Recipes Tab -->
+  <div class="tab-panel" id="panel-recipes">
+    <div class="panel-header">
+      <div class="panel-title">What Can I Cook?</div>
+      <button class="btn btn-sage" id="recipeBtn" onclick="loadRecipes()">🍳 Suggest Recipes</button>
+    </div>
+    <div id="recipeContent">
+      <div class="empty">
+        <div class="empty-icon">🍳</div>
+        <h3>Ready to cook?</h3>
+        <p>Click "Suggest Recipes" to see what you can make with your current pantry.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shopping Tab -->
+  <div class="tab-panel" id="panel-shopping">
+    <div class="panel-header">
+      <div class="panel-title">Shopping List</div>
+      <button class="btn btn-ghost btn-sm" onclick="clearPurchased()">Clear Purchased</button>
+    </div>
+    <p style="font-size:0.82rem;color:var(--mid-gray);margin-bottom:1rem;">
+      Items auto-appear here via Django Signal when pantry quantity hits 0.
+    </p>
+    <div id="shoppingListEl"><div class="empty"><div class="empty-icon">🛒</div><p>Loading…</p></div></div>
+  </div>
+</main>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Add Pantry Item</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Item Name *</label>
+        <input type="text" id="fName" placeholder="e.g. Whole Milk">
+      </div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="fCategory">
+          <option value="dairy">Dairy</option>
+          <option value="meat">Meat & Seafood</option>
+          <option value="produce">Produce</option>
+          <option value="grains">Grains & Bread</option>
+          <option value="frozen">Frozen</option>
+          <option value="canned">Canned & Jarred</option>
+          <option value="condiments">Condiments & Sauces</option>
+          <option value="beverages">Beverages</option>
+          <option value="snacks">Snacks</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Quantity *</label>
+        <input type="number" id="fQty" placeholder="1" min="0" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <input type="text" id="fUnit" placeholder="pcs / kg / L / g">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Expiry Date *</label>
+      <input type="date" id="fExpiry">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="fNotes" rows="2" placeholder="Optional notes…" style="resize:vertical"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = '/api/v1';
+let allItems = [];
+let editingId = null;
+const CATS = {dairy:'Dairy',meat:'Meat & Seafood',produce:'Produce',grains:'Grains & Bread',frozen:'Frozen',canned:'Canned & Jarred',condiments:'Condiments & Sauces',beverages:'Beverages',snacks:'Snacks',other:'Other'};
+
+// ── CSRF helper ───────────────────────────────────────────────
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Shorthand: headers for mutating requests
+function csrfHeaders(extra = {}) {
+  return { 'X-CSRFToken': getCookie('csrftoken'), ...extra };
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Tab Switching ─────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab, .tab-panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelectorAll('.header-pills .pill').forEach((p,i) => {
+    p.classList.toggle('active', ['pantry','expiring','recipes','shopping'][i] === name);
+  });
+  if (name === 'expiring') loadExpiring();
+  if (name === 'shopping') loadShopping();
+}
+
+// ── Pantry CRUD ───────────────────────────────────────────────
+async function loadPantry() {
+  const cat = document.getElementById('categoryFilter')?.value || '';
+  const search = document.getElementById('searchInput')?.value || '';
+  let url = `${API}/pantry/?ordering=expiry_date`;
+  if (cat) url += `&category=${cat}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  const res = await fetch(url);
+  allItems = await res.json();
+  renderTable(allItems);
+  updateStats();
+}
+
+function renderTable(items) {
+  const tbody = document.getElementById('pantryTable');
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📦</div><h3>No items found</h3><p>Add your first pantry item!</p></div></td></tr>`;
+    return;
+  }
+  const today = new Date().toISOString().split('T')[0];
+  tbody.innerHTML = items.map(item => {
+    const expired = item.expiry_date < today;
+    const soon = !expired && item.days_until_expiry <= 2;
+    const badge = expired
+      ? `<span class="badge badge-expired">Expired</span>`
+      : soon ? `<span class="badge badge-soon">Expiring Soon</span>`
+             : `<span class="badge badge-good">Fresh</span>`;
+    return `<tr>
+      <td><span style="font-weight:500">${item.name}</span></td>
+      <td>${CATS[item.category] || item.category}</td>
+      <td>${item.quantity} ${item.unit}</td>
+      <td>${item.expiry_date}</td>
+      <td>${badge}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openModal(${item.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem(${item.id}, '${item.name}')">Del</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterItems() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('categoryFilter').value;
+  const filtered = allItems.filter(i => i.name.toLowerCase().includes(search) && (!cat || i.category === cat));
+  renderTable(filtered);
+}
+
+function updateStats() {
+  const today = new Date().toISOString().split('T')[0];
+  const expired = allItems.filter(i => i.expiry_date < today).length;
+  const expiring = allItems.filter(i => i.days_until_expiry <= 2 && i.expiry_date >= today).length;
+  document.getElementById('statTotal').textContent = allItems.length;
+  document.getElementById('statExpiring').textContent = expiring;
+  document.getElementById('statExpired').textContent = expired;
+  document.getElementById('expiringCount').textContent = expiring;
+  loadShopping(true);
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+function openModal(id = null) {
+  editingId = id;
+  document.getElementById('modalTitle').textContent = id ? 'Edit Item' : 'Add Pantry Item';
+  if (id) {
+    const item = allItems.find(i => i.id === id);
+    document.getElementById('fName').value = item.name;
+    document.getElementById('fCategory').value = item.category;
+    document.getElementById('fQty').value = item.quantity;
+    document.getElementById('fUnit').value = item.unit;
+    document.getElementById('fExpiry').value = item.expiry_date;
+    document.getElementById('fNotes').value = item.notes || '';
+  } else {
+    document.getElementById('fName').value = '';
+    document.getElementById('fCategory').value = 'other';
+    document.getElementById('fQty').value = '';
+    document.getElementById('fUnit').value = 'pcs';
+    document.getElementById('fExpiry').value = '';
+    document.getElementById('fNotes').value = '';
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fName').focus(), 100);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+async function saveItem() {
+  const name = document.getElementById('fName').value.trim();
+  const expiry = document.getElementById('fExpiry').value;
+  const qty = document.getElementById('fQty').value;
+  if (!name || !expiry || qty === '') return toast('Please fill all required fields.', 'error');
+
+  const payload = {
+    name, expiry_date: expiry,
+    category: document.getElementById('fCategory').value,
+    quantity: parseFloat(qty),
+    unit: document.getElementById('fUnit').value || 'pcs',
+    notes: document.getElementById('fNotes').value,
+  };
+
+  const btn = document.getElementById('saveBtn');
+  btn.innerHTML = '<span class="spinner"></span> Saving…'; btn.disabled = true;
+
+  const url = editingId ? `${API}/pantry/${editingId}/` : `${API}/pantry/`;
+  const method = editingId ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    toast(editingId ? 'Item updated!' : 'Item added!', 'success');
+    closeModal();
+    loadPantry();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    btn.innerHTML = 'Save Item'; btn.disabled = false;
+  }
+}
+
+async function deleteItem(id, name) {
+  if (!confirm(`Delete "${name}"?`)) return;
+  const res = await fetch(`${API}/pantry/${id}/`, {
+    method: 'DELETE',
+    headers: csrfHeaders(),
+  });
+  if (res.ok) { toast(`"${name}" deleted.`, 'info'); loadPantry(); }
+  else toast('Delete failed.', 'error');
+}
+
+// ── Expiring Soon ─────────────────────────────────────────────
+async function loadExpiring() {
+  const el = document.getElementById('expiringList');
+  el.innerHTML = '<div class="empty"><p>Loading…</p></div>';
+  try {
+    const res = await fetch(`${API}/expiring-soon/`);
+    const data = await res.json();
+    if (!data.items.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><h3>All clear!</h3><p>No items expiring in the next 48 hours.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<p style="font-size:0.82rem;color:var(--mid-gray);margin-bottom:1rem">Deadline: <strong>${data.deadline}</strong> · ${data.count} item(s)</p><div class="expiring-list">` +
+      data.items.map(item => {
+        const expired = item.days_until_expiry < 0;
+        const color = expired ? 'var(--danger)' : 'var(--warning)';
+        const label = expired
+          ? `Expired ${Math.abs(item.days_until_expiry)}d ago`
+          : item.days_until_expiry === 0 ? 'Expires TODAY'
+          : `Expires in ${item.days_until_expiry}d`;
+        return `<div class="expiring-item ${expired ? 'expired' : 'warning'}">
+          <div class="expiring-dot" style="background:${color}"></div>
+          <div class="expiring-info">
+            <div class="expiring-name">${item.name}</div>
+            <div class="expiring-sub">${item.quantity} ${item.unit} · ${CATS[item.category]}</div>
+          </div>
+          <div class="expiring-days" style="color:${color}">${label}</div>
+        </div>`;
+      }).join('') + '</div>';
+  } catch {
+    el.innerHTML = '<div class="empty"><p>Failed to load.</p></div>';
+  }
+}
+
+// ── Recipes ───────────────────────────────────────────────────
+async function loadRecipes() {
+  const btn = document.getElementById('recipeBtn');
+  const el = document.getElementById('recipeContent');
+  btn.innerHTML = '<span class="spinner"></span> Fetching…'; btn.disabled = true;
+  el.innerHTML = '<div class="empty"><p>Contacting Spoonacular API…</p></div>';
+  try {
+    const res = await fetch(`${API}/suggest-recipes/`);
+    const data = await res.json();
+    if (data.error) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3>Oops</h3><p>${data.error}</p></div>`;
+      return;
+    }
+    const note = data.note ? `<div style="background:#FEF3E2;border:1px solid #F5D08A;border-radius:8px;padding:0.75rem 1rem;font-size:0.82rem;margin-bottom:1.25rem;">ℹ️ ${data.note}</div>` : '';
+    const chips = data.pantry_ingredients.map(i =>
+      `<span style="background:var(--cream);border:1px solid var(--border);padding:0.2rem 0.6rem;border-radius:99px;font-size:0.75rem">${i}</span>`
+    ).join('');
+    el.innerHTML = note +
+      `<div style="margin-bottom:1.25rem"><p style="font-size:0.82rem;color:var(--mid-gray);margin-bottom:0.5rem">Using pantry ingredients:</p><div style="display:flex;flex-wrap:wrap;gap:0.4rem">${chips}</div></div>` +
+      `<div class="recipe-grid">` +
+      data.recipes.map(r => `
+        <div class="recipe-card">
+          ${r.image ? `<img class="recipe-img" src="${r.image}" alt="${r.title}" onerror="this.style.display='none'">` : ''}
+          <div class="recipe-body">
+            <div class="recipe-title">${r.title}</div>
+            <div class="recipe-meta">
+              <span class="used">✓ ${r.usedIngredientCount} have</span>
+              <span class="missed">+ ${r.missedIngredientCount} missing</span>
+            </div>
+            ${r.missedIngredients?.length ? `<div style="margin-top:0.5rem;font-size:0.75rem;color:var(--mid-gray)">Need: ${r.missedIngredients.map(i=>i.name).join(', ')}</div>` : ''}
+          </div>
+        </div>`
+      ).join('') + '</div>';
+  } catch {
+    el.innerHTML = '<div class="empty"><p>Error contacting recipe API.</p></div>';
+  } finally {
+    btn.innerHTML = '🍳 Suggest Recipes'; btn.disabled = false;
+  }
+}
+
+// ── Shopping List ─────────────────────────────────────────────
+async function loadShopping(statsOnly = false) {
+  const res = await fetch(`${API}/shopping/`);
+  const items = await res.json();
+  const unpurchased = items.filter(i => !i.purchased).length;
+  document.getElementById('statShopping').textContent = unpurchased;
+  document.getElementById('shoppingCount').textContent = unpurchased;
+  if (statsOnly) return;
+  const el = document.getElementById('shoppingListEl');
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🛒</div><h3>List is empty</h3><p>Items auto-appear here when pantry stock hits 0.</p></div>`;
+    return;
+  }
+  el.innerHTML = items.map(item => `
+    <div class="shopping-item ${item.purchased ? 'purchased' : ''}">
+      <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${item.id}, this.checked)">
+      <span class="item-name" style="${item.purchased ? 'text-decoration:line-through' : ''}">${item.name}</span>
+      <span style="font-size:0.78rem;color:var(--mid-gray)">${CATS[item.category] || ''}</span>
+      <button class="btn btn-ghost btn-sm" onclick="deleteShoppingItem(${item.id})">✕</button>
+    </div>`
+  ).join('');
+}
+
+async function togglePurchased(id, checked) {
+  await fetch(`${API}/shopping/${id}/`, {
+    method: 'PATCH',
+    headers: csrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ purchased: checked })
+  });
+  loadShopping();
+}
+
+async function deleteShoppingItem(id) {
+  await fetch(`${API}/shopping/${id}/`, {
+    method: 'DELETE',
+    headers: csrfHeaders(),
+  });
+  loadShopping();
+}
+
+async function clearPurchased() {
+  const res = await fetch(`${API}/shopping/`);
+  const items = await res.json();
+  const purchased = items.filter(i => i.purchased);
+  await Promise.all(purchased.map(i =>
+    fetch(`${API}/shopping/${i.id}/`, {
+      method: 'DELETE',
+      headers: csrfHeaders(),
+    })
+  ));
+  toast(`Cleared ${purchased.length} purchased item(s).`, 'info');
+  loadShopping();
+}
+
+// ── Close modal on backdrop click ─────────────────────────────
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── Init ──────────────────────────────────────────────────────
+loadPantry();
+</script>
+</body>
+</html>
