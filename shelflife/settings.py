@@ -104,7 +104,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # ── External APIs ─────────────────────────────────────────────────────────────
-SPOONACULAR_API_KEY = '4c97338e133042369cf0cb9d565d2ee6'
+SPOONACULAR_API_KEY = os.environ.get('SPOONACULAR_API_KEY', '')
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
