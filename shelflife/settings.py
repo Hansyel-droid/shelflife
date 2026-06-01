@@ -1,8 +1,8 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-load_dotenv()
 
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -10,7 +10,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-shelflife-dev-key-cha
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['hansdealg.pythonanywhere.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -73,20 +73,31 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ── Google OAuth2 / allauth ───────────────────────────────────────────────────
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = False
+
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
+HEADLESS_ONLY = False
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
+# ---------- Static files ----------
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']     # for development
+STATIC_ROOT = '/home/hansdealg/shelflife/static_root'   # for production (collectstatic)
+
+# ---------- Authentication & allauth ----------
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 SITE_ID = 1
-# ── allauth settings ──────────────────────────────────────────
-ACCOUNT_LOGIN_METHODS = {'username', 'email'}   # allows BOTH username and email
+
+# allauth settings
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
@@ -94,17 +105,29 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 ACCOUNT_LOGOUT_ON_GET = True
 
+#Google OAuth2 provider configuration (using APP structure for reliability)
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
-        'CLIENT_ID': os.environ.get('GOOGLE_CLIENT_ID', ''),
-        'SECRET': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+        'OAUTH_PKCE_ENABLED': True,
     }
 }
 
-# ── External APIs ─────────────────────────────────────────────────────────────
-SPOONACULAR_API_KEY = os.environ.get('SPOONACULAR_API_KEY', '')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 3600
+SESSION_COOKIE_HTTPONLY = True
+SESSION_SAVE_EVERY_REQUEST = True
+
+SOCIALACCOUNT_STORE_TOKENS = True
+
+# ---------- External APIs ----------
+SPOONACULAR_API_KEY = os.environ.get('SPOONACULAR_API_KEY', '4c97338e133042369cf0cb9d565d2ee6')
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
